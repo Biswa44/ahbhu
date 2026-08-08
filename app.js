@@ -11,10 +11,18 @@ var tabRegister = document.getElementById('tab-register');
 var formLogin = document.getElementById('form-login');
 var formRegister = document.getElementById('form-register');
 
-// 1. One-time Login Bypass (Frictionless persistent session)
+// Keep a session only for an account that was registered in this browser.
 (function checkPersistentAuth() {
-    if (localStorage.getItem('ahbhu_verified') === 'true') {
+    var storedUsers = JSON.parse(localStorage.getItem('ahbhu_users') || '[]');
+    var activeUser = localStorage.getItem('ahbhu_active_user');
+    var hasRegisteredSession = storedUsers.some(user => user.username === activeUser);
+
+    if (localStorage.getItem('ahbhu_verified') === 'true' && hasRegisteredSession) {
         authOverlay.classList.add('hidden');
+    } else {
+        // Clear a session created by the previous email-only access flow.
+        localStorage.removeItem('ahbhu_verified');
+        localStorage.removeItem('ahbhu_active_user');
     }
 })();
 
@@ -55,13 +63,18 @@ formRegister.addEventListener('submit', function(e) {
     storedUsers.push(userDetails);
     localStorage.setItem('ahbhu_users', JSON.stringify(storedUsers));
 
-    // Submit details to Google Sheets Web App
+    // Submit registration details to Google Sheets. Passwords are kept only in this browser.
     if (googleAppsScriptUrl && googleAppsScriptUrl !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
         fetch(googleAppsScriptUrl, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userDetails)
+            body: JSON.stringify({
+                username: username,
+                contact: contact,
+                email: email,
+                date: dateString
+            })
         })
         .then(() => console.log('Synced to Google Sheets!'))
         .catch(err => console.error('Google Sheets Sync failed:', err));
@@ -72,30 +85,23 @@ formRegister.addEventListener('submit', function(e) {
     authOverlay.classList.add('hidden');
 });
 
-// Frictionless email access. This is not a password-based authentication system.
+// Registered users log in with their saved email and password. Once verified,
+// the browser remembers the session and does not ask again on future visits.
 formLogin.addEventListener('submit', function(e) {
     e.preventDefault();
     var email = document.getElementById('login-email').value.trim().toLowerCase();
-    if (!email) return;
+    var password = document.getElementById('login-password').value;
+    var storedUsers = JSON.parse(localStorage.getItem('ahbhu_users') || '[]');
+    var foundUser = storedUsers.find(user => user.email.toLowerCase() === email && user.password === password);
+
+    if (!foundUser) {
+        alert('No matching account was found on this browser. Please use Sign Up first, or check your email and password.');
+        return;
+    }
 
     localStorage.setItem('ahbhu_verified', 'true');
-    localStorage.setItem('ahbhu_active_user', email.split('@')[0]);
+    localStorage.setItem('ahbhu_active_user', foundUser.username);
     authOverlay.classList.add('hidden');
-
-    // Record email access in the optional Google Sheet integration. Never send passwords.
-    if (googleAppsScriptUrl && googleAppsScriptUrl !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-        fetch(googleAppsScriptUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                username: email.split('@')[0],
-                contact: '',
-                email: email,
-                date: new Date().toLocaleString()
-            })
-        }).catch(err => console.error('Google Sheets access log failed:', err));
-    }
 });
 
 
