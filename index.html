@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- SEO Optimization Meta Tags for Google Searchability -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+        content="Making GIS simple, accessible, and useful for everyone. AhBhu brings maps and geospatial information together in an easy-to-use Web GIS platform." />
+    <meta name="keywords"
+        content="AhBhu, Web GIS, GIS online, draw polygons, maps, elevation finder, GPS tracking, export GeoJSON, layout manager, geography" />
+    <meta name="author" content="AhBhu Team" />
+
+    <!-- OpenGraph Social Card Preview (What shows when shared on Facebook/WhatsApp) -->
+    <meta property="og:title" content="AhBhu | Simple, Accessible Web GIS" />
+    <meta property="og:description"
+        content="Draw polygons, lines, measure areas, track live GPS locations and speed, query elevation and street names globally." />
+    <meta property="og:image" content="assets/logo.png" />
+    <meta property="og:type" content="website" />
+
+    <title>AhBhu - Simple & Accessible Web GIS</title>
+
+    <!-- Google Fonts: Outfit for modern, premium look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Leaflet Map CSS Styling -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Leaflet-Rotate CSS Plugin (For full 360 map rotation) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.css" />
+
+    <!-- Our Custom Lavender CSS Styling -->
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Google Search Engine Structured Data Schema (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "AhBhu",
+      "url": "https://ahbhu.com",
+      "logo": "https://ahbhu.com/assets/logo.png",
+      "description": "Making GIS simple, accessible, and useful for everyone. AhBhu brings maps and geospatial information together in an easy-to-use Web GIS platform.",
+      "applicationCategory": "GIS Application",
+      "operatingSystem": "All",
+      "creator": {
+        "@type": "Organization",
+        "name": "AhBhu Team",
+        "email": "Biswajitmondal00040@gmail.com"
+      }
+    }
+    </script>
+</head>
+
+<body>
+
+    <!-- USER AUTHENTICATION OVERLAY (Login & Registration Modal) -->
+    <div id="auth-overlay" class="auth-overlay">
+        <div class="auth-container">
+            <div class="auth-header">
+                <img src="assets/logo.png" alt="AhBhu Logo" class="auth-logo" onerror="this.style.display='none'" />
+                <h2 class="auth-title">AhBhu Web GIS</h2>
+                <p class="auth-subtitle">Verify your identity to access spatial tools</p>
+            </div>
+
+            <!-- Auth Form Switcher Tabs -->
+            <div class="auth-tabs">
+                <button id="tab-login" class="auth-tab active">Log In</button>
+                <button id="tab-register" class="auth-tab">Sign Up</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="form-login" class="auth-form">
+                <div class="form-group">
+                    <label for="login-email"><i data-lucide="mail"></i> Mail ID</label>
+                    <input type="email" id="login-email" required placeholder="name@email.com" />
+                </div>
+                <div class="form-group">
+                    <label for="login-password"><i data-lucide="lock"></i> Password</label>
+                    <input type="password" id="login-password" required placeholder="••••••••" />
+                </div>
+                <button type="submit" class="auth-submit-btn">Verify & Enter</button>
+            </form>
+
+            <!-- Registration Form -->
+            <form id="form-register" class="auth-form hidden">
+                <div class="form-group">
+                    <label for="reg-username"><i data-lucide="user"></i> Username</label>
+                    <input type="text" id="reg-username" required placeholder="Enter username" />
+                </div>
+                <div class="form-group">
+                    <label for="reg-contact"><i data-lucide="phone"></i> Contact Details</label>
+                    <input type="tel" id="reg-contact" required placeholder="Mobile or phone number" />
+                </div>
+                <div class="form-group">
+                    <label for="reg-email"><i data-lucide="mail"></i> Mail ID</label>
+                    <input type="email" id="reg-email" required placeholder="name@email.com" />
+                </div>
+                <div class="form-group">
+                    <label for="reg-password"><i data-lucide="lock"></i> Password</label>
+                    <input type="password" id="reg-password" required placeholder="Create password" />
+                </div>
+                <button type="submit" class="auth-submit-btn">Register & Update Sheet</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- DEVELOPER PROFILE FLOATING OVERLAY MODAL -->
+    <div id="dev-modal" class="dev-modal hidden">
+        <div class="dev-modal-content">
+            <button id="btn-close-dev" class="close-dev-btn">&times;</button>
+            <div class="dev-modal-header">
+                <h2 class="dev-name">Biswajit Mondal (Modna)</h2>
+            </div>
+            <div class="dev-modal-body">
+                <p class="dev-subhead">PhD Scholar, Central University of Jharkhand</p>
+                <p class="dev-subhead">Researcher in Cryosphere and Geospatial Science</p>
+                <p class="dev-bio">
+                    "Working on understanding cryospheric changes and developing geospatial approaches to assess and
+                    address their future impacts."
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- The Fullscreen Map Container -->
+    <div id="map"></div>
+
+    <!-- 360° MAP NORTH ARROW / COMPASS WIDGET (Top Left, below default zoom controls) -->
+    <div id="compass-container" class="compass-container"
+        title="Ctrl+Alt+Drag map to rotate. Click compass to reset to North (0°)">
+        <div id="compass-ring" class="compass-ring"></div>
+        <div id="compass-arrow" class="compass-arrow">
+            <span class="arrow-north">N</span>
+            <span class="arrow-south">S</span>
+        </div>
+        <span id="compass-bearing" class="compass-bearing">0°</span>
+    </div>
+
+    <!-- LEFT SIDEBAR: Dynamic Layer Manager & Extractor -->
+    <div id="left-sidebar" class="sidebar left-sidebar">
+        <div class="sidebar-header">
+            <div class="brand-container">
+                <i data-lucide="layers" class="sidebar-icon-purple"></i>
+                <h2 class="sidebar-head-title">Layers Manager</h2>
+            </div>
+            <p class="brand-description">Create, Organize and Manage the layers.</p>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Add New Layer Form with enforced GIS Type selection -->
+        <div class="sidebar-section">
+            <h3 class="section-title">Create GIS Layer</h3>
+            <div class="add-layer-form-vertical">
+                <input type="text" id="input-new-layer" placeholder="Layer name (e.g. Rivers)" />
+                <div class="add-layer-row">
+                    <select id="select-new-layer-type" class="layer-type-select">
+                        <option value="Point">Point</option>
+                        <option value="Line">Line</option>
+                        <option value="Polygon">Polygon</option>
+                    </select>
+                    <button id="btn-add-layer" class="wide-add-btn">
+                        <i data-lucide="plus"></i> Add Layer
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Layer List container -->
+        <div class="sidebar-section flex-grow-section">
+            <h3 class="section-title">Active Layers</h3>
+            <div id="layer-list-container" class="layer-list">
+                <!-- Dynamically populated layers will go here -->
+            </div>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Extract Tool section -->
+        <div class="sidebar-section extract-section">
+            <h3 class="section-title"><i data-lucide="hard-drive-download" class="inline-icon"></i> Extract Geospatial
+                Data</h3>
+            <div class="extract-container">
+                <div class="extract-row">
+                    <label>Select Layer:</label>
+                    <select id="select-extract-bounds" class="extract-select">
+                        <!-- Dynamic layer options will be appended here -->
+                    </select>
+                </div>
+                <div class="extract-row">
+                    <label>Download Format:</label>
+                    <select id="select-extract-format" class="extract-select">
+                        <option value="geojson">GeoJSON (.geojson)</option>
+                        <option value="kml">KML (.kml)</option>
+                        <option value="csv">CSV Table (.csv)</option>
+                        <option value="shp">Shapefile (.zip)</option>
+                    </select>
+                </div>
+                <button id="btn-run-extract" class="extract-run-btn">
+                    <i data-lucide="download-cloud"></i> Download Layer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR: Tools & Measurements (Lavender Floating Card) -->
+    <div id="sidebar" class="sidebar right-sidebar">
+        <!-- Branding Header -->
+        <div class="sidebar-header">
+            <div class="brand-container">
+                <img src="assets/logo.png" alt="AhBhu Logo" class="brand-logo" onerror="this.style.display='none'" />
+                <h1 class="brand-name">AhBhu</h1>
+            </div>
+            <p class="brand-description">
+                Making GIS simple, accessible, and useful for everyone.
+                AhBhu brings maps and geospatial information together in an easy-to-use Web GIS platform.
+            </p>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Mode & Drawing Controls (Grid containing Rectangle Draw too) -->
+        <div class="sidebar-section">
+            <h3 class="section-title">Drawing & Query Tools</h3>
+            <div class="tools-grid-five">
+                <button id="btn-point" class="tool-btn-small" title="Draw Point">
+                    <i data-lucide="map-pin"></i>
+                    <span>Point</span>
+                </button>
+                <button id="btn-line" class="tool-btn-small" title="Draw Line">
+                    <i data-lucide="git-commit"></i>
+                    <span>Line</span>
+                </button>
+                <button id="btn-polygon" class="tool-btn-small" title="Draw Polygon">
+                    <i data-lucide="pentagon"></i>
+                    <span>Polygon</span>
+                </button>
+                <button id="btn-rectangle" class="tool-btn-small" title="Draw Rectangle">
+                    <i data-lucide="square"></i>
+                    <span>Rectangle</span>
+                </button>
+                <button id="btn-info" class="tool-btn-small" title="Query Information ('i' Button)">
+                    <i data-lucide="info"></i>
+                    <span>Info</span>
+                </button>
+            </div>
+            <div class="control-actions">
+                <button id="btn-finish" class="action-btn success-btn hidden">
+                    <i data-lucide="check"></i> Finish Shape
+                </button>
+                <button id="btn-clear" class="action-btn danger-btn">
+                    <i data-lucide="trash-2"></i> Clear Map
+                </button>
+            </div>
+        </div>
+
+        <!-- Location Info & Coordinate Query (for "i" button) -->
+        <div id="info-panel" class="sidebar-section hidden">
+            <h3 class="section-title">Queried Location Details</h3>
+            <div class="info-list">
+                <div class="info-item">
+                    <span class="info-label"><i data-lucide="navigation"></i> Lat / Long:</span>
+                    <span id="info-coords" class="info-value">Click on map...</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label"><i data-lucide="mountain"></i> Elevation:</span>
+                    <span id="info-elevation" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label"><i data-lucide="map"></i> Nearest Street:</span>
+                    <span id="info-street" class="info-value">-</span>
+                </div>
+                <button id="btn-share-location" class="share-btn hidden">
+                    <i data-lucide="share-2"></i> Copy Location Share Link
+                </button>
+            </div>
+        </div>
+
+        <!-- Live Geolocation Tracking -->
+        <div class="sidebar-section">
+            <h3 class="section-title">GPS & Location Sharing</h3>
+            <div class="gps-panel">
+                <button id="btn-gps" class="gps-btn">
+                    <i data-lucide="crosshair"></i> Start Live GPS
+                </button>
+                <div id="gps-details" class="gps-details hidden">
+                    <div class="gps-row">
+                        <span>Accuracy:</span>
+                        <span id="gps-accuracy">-</span>
+                    </div>
+                    <div class="gps-row">
+                        <span>Current Speed:</span>
+                        <span id="gps-speed">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Basemap Switching Options -->
+        <div class="sidebar-section">
+            <div class="switcher-header-row">
+                <h3 class="section-title">Basemap Type</h3>
+
+                <!-- Road & Labels Overlay Toggle -->
+                <div class="roads-overlay-control" title="Show road paths and text labels on top of basemaps">
+                    <input type="checkbox" id="chk-roads-overlay" />
+                    <label for="chk-roads-overlay">Show Labels</label>
+                </div>
+            </div>
+
+            <div class="basemap-grid">
+                <!-- Using real zoom tile images for map thumbnails -->
+                <div class="basemap-card active" data-map="osm">
+                    <div class="basemap-thumbnail"
+                        style="background-image: url('https://a.tile.openstreetmap.org/2/2/1.png'); background-size: cover;">
+                    </div>
+                    <span>Street Map</span>
+                </div>
+                <div class="basemap-card" data-map="topo">
+                    <div class="basemap-thumbnail"
+                        style="background-image: url('https://a.tile.opentopomap.org/2/2/1.png'); background-size: cover;">
+                    </div>
+                    <span>Topographic</span>
+                </div>
+                <div class="basemap-card" data-map="satellite">
+                    <div class="basemap-thumbnail"
+                        style="background-image: url('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/2/1/2'); background-size: cover;">
+                    </div>
+                    <span>Satellite</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic OSM Overlays with small logo and checkboxes -->
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section">
+            <div class="osm-overlay-header">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b0/Openstreetmap_logo.svg" alt="OSM Logo"
+                    class="osm-mini-logo" />
+                <h3 class="section-title">OSM Features Overlays</h3>
+                <input type="checkbox" id="chk-osm-overlays" class="osm-main-checkbox" />
+            </div>
+
+            <div id="osm-sublayers-panel" class="osm-sublayers-panel disabled">
+                <div class="osm-sublayer-item">
+                    <input type="checkbox" id="chk-osm-roads" disabled />
+                    <label for="chk-osm-roads">Streets & Highways</label>
+                </div>
+                <div class="osm-sublayer-item">
+                    <input type="checkbox" id="chk-osm-railways" disabled />
+                    <label for="chk-osm-railways">Railways Tracker</label>
+                </div>
+                <div class="osm-sublayer-item">
+                    <input type="checkbox" id="chk-osm-waterways" disabled />
+                    <label for="chk-osm-waterways">Waterways / Rivers</label>
+                </div>
+                <div class="osm-sublayer-item">
+                    <input type="checkbox" id="chk-osm-ponds" disabled />
+                    <label for="chk-osm-ponds">Ponds / Lakes (Zoom 13+)</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Regional Boundaries Query Selector (Single Country & State Dropdown Selector) -->
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section">
+            <h3 class="section-title"><i data-lucide="globe" class="inline-icon"></i> Locate Boundaries</h3>
+            <div class="region-inputs-sidebar">
+                <div class="region-field-row">
+                    <label>Select Region:</label>
+                    <select id="select-reg-region" class="region-select-dropdown">
+                        <option value="">-- Choose Country or State --</option>
+                    </select>
+                </div>
+                <div class="region-actions">
+                    <button id="btn-apply-region" class="region-apply-btn-s"><i data-lucide="search"></i>
+                        Locate</button>
+                    <button id="btn-clear-region" class="region-clear-btn-s" title="Clear boundary"><i
+                            data-lucide="rotate-ccw"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Link to display the Developer Details Modal -->
+        <div class="sidebar-section developer-link-section">
+            <button id="btn-about-dev" class="about-dev-btn">
+                <i data-lucide="user-check"></i> Know about the Developer of AhBhu
+            </button>
+        </div>
+
+        <!-- Footer / Contact Info -->
+        <div class="sidebar-footer">
+            <p>Developed with passion by AhBhu Team</p>
+            <p>Contact Us: <a href="mailto:Biswajitmondal00040@gmail.com">Biswajitmondal00040@gmail.com</a></p>
+        </div>
+    </div>
+
+    <!-- FLOATING ATTRIBUTE TABLE WINDOW -->
+    <div id="attribute-table-container" class="attribute-table-container hidden">
+        <div class="attribute-table-header">
+            <div class="attr-table-title-grp">
+                <i data-lucide="table" class="sidebar-icon-purple"></i>
+                <h3 id="attr-table-title">Attribute Table: Layer</h3>
+            </div>
+            <div class="attr-table-actions">
+                <button id="btn-attr-add-field" class="attr-btn"><i data-lucide="plus-square"></i> Add Field</button>
+                <button id="btn-attr-calculate" class="attr-btn"><i data-lucide="calculator"></i> Calculate
+                    Field</button>
+                <button id="btn-attr-csv" class="attr-btn"><i data-lucide="file-spreadsheet"></i> Download CSV</button>
+                <button id="btn-attr-close" class="attr-close-btn" title="Close Table">&times;</button>
+            </div>
+        </div>
+        <div class="attribute-table-body">
+            <table id="attr-table" class="attr-table">
+                <thead>
+                    <tr id="attr-table-headers">
+                        <!-- Dynamic headers will go here -->
+                    </tr>
+                </thead>
+                <tbody id="attr-table-rows">
+                    <!-- Dynamic rows will go here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Field Calculator Modal Dialog -->
+    <div id="calculator-modal" class="calculator-modal hidden">
+        <div class="calculator-modal-content">
+            <h3><i data-lucide="calculator"></i> Field Calculator</h3>
+            <div class="calc-form-group">
+                <label for="calc-field-select">Target Field to Update:</label>
+                <select id="calc-field-select" class="calc-select"></select>
+            </div>
+            <div class="calc-form-group">
+                <label for="calc-formula">Expression / Formula:</label>
+                <input type="text" id="calc-formula" placeholder="e.g. Area * 0.000247" />
+                <p class="calc-tip">Available geometry variables: <code>Area</code>, <code>Length</code>,
+                    <code>Lat</code>, <code>Long</code>. Or type custom field names like <code>[fieldName]</code>.</p>
+            </div>
+            <div class="calc-buttons">
+                <button id="btn-calc-apply" class="calc-btn-submit">Apply Formula</button>
+                <button id="btn-calc-cancel" class="calc-btn-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Custom Field Modal Dialog -->
+    <div id="add-field-modal" class="add-field-modal hidden">
+        <div class="add-field-content">
+            <h3><i data-lucide="file-plus"></i> Add Attribute Field</h3>
+            <div class="field-form-group">
+                <label for="new-field-name">Field Name:</label>
+                <input type="text" id="new-field-name" placeholder="e.g. population" />
+            </div>
+            <div class="field-form-group">
+                <label for="new-field-type">Field Type:</label>
+                <select id="new-field-type" class="field-type-select">
+                    <option value="text">Text (String)</option>
+                    <option value="number">Number (Integer/Double)</option>
+                </select>
+            </div>
+            <div class="field-buttons">
+                <button id="btn-field-submit" class="field-btn-submit">Add Field</button>
+                <button id="btn-field-cancel" class="field-btn-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet Map library -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Leaflet-Rotate JS Plugin -->
+    <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
+
+    <!-- Mapbox shp-write CDN to download Shapefiles -->
+    <script src="https://unpkg.com/@mapbox/shp-write@latest/shpwrite.js"></script>
+
+    <!-- Lucide Icons library -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Our Custom GIS logic -->
+    <script src="app.js"></script>
+</body>
+
+</html>
