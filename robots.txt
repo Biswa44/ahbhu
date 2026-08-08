@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://biswa44.github.io/ahbhu/sitemap.xml
