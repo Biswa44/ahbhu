@@ -3,7 +3,7 @@ lucide.createIcons();
 
 // --- USER AUTHENTICATION & GOOGLE SHEETS LINK ---
 
-var googleAppsScriptUrl = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'; // Set this inside your google_sheets_setup.md
+var googleAppsScriptUrl = 'https://script.google.com/macros/s/AKfycbxb52MuIjh_cEqZ5wAbzLaniCBe5gmli4CHP1hyne7F5SN5qqgtFXw3FfXjVHbTG3x1/exec';
 
 var authOverlay = document.getElementById('auth-overlay');
 var tabLogin = document.getElementById('tab-login');
@@ -81,6 +81,21 @@ formLogin.addEventListener('submit', function(e) {
     localStorage.setItem('ahbhu_verified', 'true');
     localStorage.setItem('ahbhu_active_user', email.split('@')[0]);
     authOverlay.classList.add('hidden');
+
+    // Record email access in the optional Google Sheet integration. Never send passwords.
+    if (googleAppsScriptUrl && googleAppsScriptUrl !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+        fetch(googleAppsScriptUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: email.split('@')[0],
+                contact: '',
+                email: email,
+                date: new Date().toLocaleString()
+            })
+        }).catch(err => console.error('Google Sheets access log failed:', err));
+    }
 });
 
 
