@@ -72,22 +72,15 @@ formRegister.addEventListener('submit', function(e) {
     authOverlay.classList.add('hidden');
 });
 
-// Login
+// Frictionless email access. This is not a password-based authentication system.
 formLogin.addEventListener('submit', function(e) {
     e.preventDefault();
-    var email = document.getElementById('login-email').value;
-    var password = document.getElementById('login-password').value;
+    var email = document.getElementById('login-email').value.trim().toLowerCase();
+    if (!email) return;
 
-    var storedUsers = JSON.parse(localStorage.getItem('ahbhu_users') || '[]');
-    var foundUser = storedUsers.find(u => u.email === email && u.password === password);
-
-    if (foundUser || (email === 'admin@ahbhu.com' && password === 'admin')) {
-        localStorage.setItem('ahbhu_verified', 'true');
-        localStorage.setItem('ahbhu_active_user', foundUser ? foundUser.username : 'Admin');
-        authOverlay.classList.add('hidden');
-    } else {
-        alert('Authentication failed! Wrong credentials.');
-    }
+    localStorage.setItem('ahbhu_verified', 'true');
+    localStorage.setItem('ahbhu_active_user', email.split('@')[0]);
+    authOverlay.classList.add('hidden');
 });
 
 
