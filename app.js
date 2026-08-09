@@ -1,107 +1,149 @@
 // Initialize Lucide Icons for beautiful SVG graphics
 lucide.createIcons();
 
-// --- USER AUTHENTICATION & GOOGLE SHEETS LINK ---
+// --- USER AUTHENTICATION (EMAIL ONLY, NO PASSWORD) & GOOGLE SHEETS LINK ---
+// Flow: user types an email in Step 1.
+//   - Known email (already registered on this browser)  -> logged in immediately.
+//   - Unknown email -> Step 2 asks for just a name, then the account is created.
+// Sessions persist per-browser via localStorage, same mechanism as before.
 
 var googleAppsScriptUrl = 'https://script.google.com/macros/s/AKfycbxb52MuIjh_cEqZ5wAbzLaniCBe5gmli4CHP1hyne7F5SN5qqgtFXw3FfXjVHbTG3x1/exec';
 
 var authOverlay = document.getElementById('auth-overlay');
-var tabLogin = document.getElementById('tab-login');
-var tabRegister = document.getElementById('tab-register');
-var formLogin = document.getElementById('form-login');
-var formRegister = document.getElementById('form-register');
+var formEmailCheck = document.getElementById('form-email-check');
+var formNewUser = document.getElementById('form-new-user');
+var checkEmailInput = document.getElementById('check-email');
+var newUserEmailNote = document.getElementById('new-user-email-note');
+var btnBackToEmail = document.getElementById('btn-back-to-email');
+
+var profileWidget = document.getElementById('profile-widget');
+var profileBtn = document.getElementById('btn-profile');
+var profileDropdown = document.getElementById('profile-dropdown');
+var profileNameDisplay = document.getElementById('profile-name-display');
+var profileEmailDisplay = document.getElementById('profile-email-display');
+var btnLogout = document.getElementById('btn-logout');
+
+// Holds the email typed in Step 1 while Step 2 (new accounts only) is being filled in.
+var pendingNewEmail = '';
+
+function getStoredUsers() {
+    return JSON.parse(localStorage.getItem('ahbhu_users') || '[]');
+}
+
+function saveStoredUsers(users) {
+    localStorage.setItem('ahbhu_users', JSON.stringify(users));
+}
+
+function showProfileWidget(user) {
+    profileWidget.classList.remove('hidden');
+    profileNameDisplay.textContent = user.username || user.email;
+    profileEmailDisplay.textContent = user.email;
+}
+
+function enterApp(user) {
+    localStorage.setItem('ahbhu_verified', 'true');
+    localStorage.setItem('ahbhu_active_user', user.email);
+    authOverlay.classList.add('hidden');
+    showProfileWidget(user);
+}
 
 // Keep a session only for an account that was registered in this browser.
 (function checkPersistentAuth() {
-    var storedUsers = JSON.parse(localStorage.getItem('ahbhu_users') || '[]');
-    var activeUser = localStorage.getItem('ahbhu_active_user');
-    var hasRegisteredSession = storedUsers.some(user => user.username === activeUser);
+    var storedUsers = getStoredUsers();
+    var activeEmail = localStorage.getItem('ahbhu_active_user');
+    var activeUser = storedUsers.find(function(user) { return user.email === activeEmail; });
 
-    if (localStorage.getItem('ahbhu_verified') === 'true' && hasRegisteredSession) {
+    if (localStorage.getItem('ahbhu_verified') === 'true' && activeUser) {
         authOverlay.classList.add('hidden');
+        showProfileWidget(activeUser);
     } else {
-        // Clear a session created by the previous email-only access flow.
         localStorage.removeItem('ahbhu_verified');
         localStorage.removeItem('ahbhu_active_user');
     }
 })();
 
-// Switch Tabs
-tabLogin.addEventListener('click', function() {
-    tabLogin.classList.add('active');
-    tabRegister.classList.remove('active');
-    formLogin.classList.remove('hidden');
-    formRegister.classList.add('hidden');
-});
-
-tabRegister.addEventListener('click', function() {
-    tabRegister.classList.add('active');
-    tabLogin.classList.remove('active');
-    formRegister.classList.remove('hidden');
-    formRegister.classList.add('hidden');
-});
-
-// Submit registration details and sync to Google Sheets
-formRegister.addEventListener('submit', function(e) {
+// Step 1: check the typed email against accounts already known on this browser.
+// Known email -> straight into the map. Unknown email -> reveal the one-field
+// registration step (Step 2) so signing up never takes more than a name + email.
+formEmailCheck.addEventListener('submit', function(e) {
     e.preventDefault();
-    var username = document.getElementById('reg-username').value;
-    var contact = document.getElementById('reg-contact').value;
-    var email = document.getElementById('reg-email').value;
-    var password = document.getElementById('reg-password').value;
+    var email = checkEmailInput.value.trim().toLowerCase();
+    var storedUsers = getStoredUsers();
+    var foundUser = storedUsers.find(function(user) { return user.email.toLowerCase() === email; });
+
+    if (foundUser) {
+        enterApp(foundUser);
+        return;
+    }
+
+    pendingNewEmail = email;
+    newUserEmailNote.textContent = "Welcome! Creating an account for " + email;
+    formEmailCheck.classList.add('hidden');
+    formNewUser.classList.remove('hidden');
+});
+
+// Let the user back out of Step 2 and try a different email.
+btnBackToEmail.addEventListener('click', function() {
+    formNewUser.classList.add('hidden');
+    formEmailCheck.classList.remove('hidden');
+    checkEmailInput.value = '';
+    checkEmailInput.focus();
+});
+
+// Step 2: create the account with just a name (email already captured in Step 1).
+// No password is stored or required anywhere in this flow.
+formNewUser.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var username = document.getElementById('reg-username').value.trim();
     var dateString = new Date().toLocaleDateString();
 
     var userDetails = {
         username: username,
-        contact: contact,
-        email: email,
-        password: password,
+        email: pendingNewEmail,
         date: dateString
     };
 
-    // Save registration locally
-    var storedUsers = JSON.parse(localStorage.getItem('ahbhu_users') || '[]');
+    // Save registration locally so this browser recognises the email next time.
+    var storedUsers = getStoredUsers();
     storedUsers.push(userDetails);
-    localStorage.setItem('ahbhu_users', JSON.stringify(storedUsers));
+    saveStoredUsers(storedUsers);
 
-    // Submit registration details to Google Sheets. Passwords are kept only in this browser.
+    // Submit registration details to Google Sheets.
     if (googleAppsScriptUrl && googleAppsScriptUrl !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
         fetch(googleAppsScriptUrl, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                username: username,
-                contact: contact,
-                email: email,
-                date: dateString
-            })
+            body: JSON.stringify(userDetails)
         })
         .then(() => console.log('Synced to Google Sheets!'))
         .catch(err => console.error('Google Sheets Sync failed:', err));
     }
 
-    localStorage.setItem('ahbhu_verified', 'true');
-    localStorage.setItem('ahbhu_active_user', username);
-    authOverlay.classList.add('hidden');
+    enterApp(userDetails);
 });
 
-// Registered users log in with their saved email and password. Once verified,
-// the browser remembers the session and does not ask again on future visits.
-formLogin.addEventListener('submit', function(e) {
-    e.preventDefault();
-    var email = document.getElementById('login-email').value.trim().toLowerCase();
-    var password = document.getElementById('login-password').value;
-    var storedUsers = JSON.parse(localStorage.getItem('ahbhu_users') || '[]');
-    var foundUser = storedUsers.find(user => user.email.toLowerCase() === email && user.password === password);
+// --- PROFILE BUTTON (top-right corner) ---
+// Shows the signed-in email/name and lets the user log out.
+profileBtn.addEventListener('click', function() {
+    profileDropdown.classList.toggle('hidden');
+});
 
-    if (!foundUser) {
-        alert('No matching account was found on this browser. Please use Sign Up first, or check your email and password.');
-        return;
+document.addEventListener('click', function(e) {
+    if (!profileWidget.contains(e.target)) {
+        profileDropdown.classList.add('hidden');
     }
+});
 
-    localStorage.setItem('ahbhu_verified', 'true');
-    localStorage.setItem('ahbhu_active_user', foundUser.username);
-    authOverlay.classList.add('hidden');
+btnLogout.addEventListener('click', function() {
+    localStorage.removeItem('ahbhu_verified');
+    localStorage.removeItem('ahbhu_active_user');
+    profileDropdown.classList.add('hidden');
+    profileWidget.classList.add('hidden');
+    formNewUser.classList.add('hidden');
+    formEmailCheck.classList.remove('hidden');
+    checkEmailInput.value = '';
+    authOverlay.classList.remove('hidden');
 });
 
 
@@ -866,7 +908,8 @@ map.getContainer().addEventListener('click', function(e) {
         e.target.closest('.calculator-modal') ||
         e.target.closest('.add-field-modal') ||
         e.target.closest('.dev-modal') ||
-        e.target.closest('.auth-overlay')
+        e.target.closest('.auth-overlay') ||
+        e.target.closest('.profile-widget')
     ) {
         return;
     }

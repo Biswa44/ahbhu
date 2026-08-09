@@ -35,6 +35,98 @@
     <!-- Our Custom Lavender CSS Styling -->
     <link rel="stylesheet" href="style.css" />
 
+    <!-- Scoped styling for the new top-right Profile button/dropdown. -->
+    <!-- Added inline (not in style.css) so this fix doesn't touch any other existing styling. -->
+    <style>
+        .profile-widget {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 1200;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .profile-btn:hover {
+            background: #f5f3ff;
+        }
+
+        .profile-btn i {
+            width: 18px;
+            height: 18px;
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            min-width: 220px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            padding: 14px;
+        }
+
+        .profile-dropdown-name {
+            margin: 0 0 2px 0;
+            font-weight: 700;
+            font-size: 14px;
+            color: #222;
+        }
+
+        .profile-dropdown-email {
+            margin: 0 0 12px 0;
+            font-size: 13px;
+            color: #666;
+            word-break: break-all;
+        }
+
+        .profile-logout-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px;
+            border: none;
+            border-radius: 8px;
+            background: #f43f5e;
+            color: #fff;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .profile-logout-btn:hover {
+            background: #e11d48;
+        }
+
+        .auth-back-btn {
+            display: block;
+            margin: 10px auto 0 auto;
+            background: none;
+            border: none;
+            color: #6d28d9;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    </style>
+
     <!-- Google Search Engine Structured Data Schema (JSON-LD) -->
     <script type="application/ld+json">
     {
@@ -57,54 +149,49 @@
 
 <body>
 
-    <!-- USER AUTHENTICATION OVERLAY (Login & Registration Modal) -->
+    <!-- USER AUTHENTICATION OVERLAY (Email-only, no password) -->
+    <!-- Single flow: type your email -> if we already know it, you're logged in -->
+    <!-- instantly; if it's new, we ask for just your name and you're in. -->
     <div id="auth-overlay" class="auth-overlay">
         <div class="auth-container">
             <div class="auth-header">
                 <img src="assets/logo.png" alt="AhBhu Logo" class="auth-logo" onerror="this.style.display='none'" />
                 <h2 class="auth-title">AhBhu Web GIS</h2>
-                <p class="auth-subtitle">Verify your identity to access spatial tools</p>
+                <p class="auth-subtitle">Enter your email to continue</p>
             </div>
 
-            <!-- Auth Form Switcher Tabs -->
-            <div class="auth-tabs">
-                <button id="tab-login" class="auth-tab active">Log In</button>
-                <button id="tab-register" class="auth-tab">Sign Up</button>
-            </div>
-
-            <!-- Login Form -->
-            <form id="form-login" class="auth-form">
+            <!-- Step 1: Email only. Existing users are logged straight in from here. -->
+            <form id="form-email-check" class="auth-form">
                 <div class="form-group">
-                    <label for="login-email"><i data-lucide="mail"></i> Mail ID</label>
-                    <input type="email" id="login-email" required placeholder="name@email.com" />
+                    <label for="check-email"><i data-lucide="mail"></i> Mail ID</label>
+                    <input type="email" id="check-email" required placeholder="name@email.com" autocomplete="email" />
                 </div>
-                <div class="form-group">
-                    <label for="login-password"><i data-lucide="lock"></i> Password</label>
-                    <input type="password" id="login-password" required placeholder="Enter your password" />
-                </div>
-                <button type="submit" class="auth-submit-btn">Log In & Enter Map</button>
+                <button type="submit" class="auth-submit-btn">Continue</button>
             </form>
 
-            <!-- Registration Form -->
-            <form id="form-register" class="auth-form hidden">
+            <!-- Step 2: Only shown the first time a new email is entered. One field, no password. -->
+            <form id="form-new-user" class="auth-form hidden">
+                <p class="auth-subtitle" id="new-user-email-note">Welcome! Let's create your account.</p>
                 <div class="form-group">
-                    <label for="reg-username"><i data-lucide="user"></i> Username</label>
-                    <input type="text" id="reg-username" required placeholder="Enter username" />
+                    <label for="reg-username"><i data-lucide="user"></i> Your Name</label>
+                    <input type="text" id="reg-username" required placeholder="Enter your name" />
                 </div>
-                <div class="form-group">
-                    <label for="reg-contact"><i data-lucide="phone"></i> Contact Details</label>
-                    <input type="tel" id="reg-contact" required placeholder="Mobile or phone number" />
-                </div>
-                <div class="form-group">
-                    <label for="reg-email"><i data-lucide="mail"></i> Mail ID</label>
-                    <input type="email" id="reg-email" required placeholder="name@email.com" />
-                </div>
-                <div class="form-group">
-                    <label for="reg-password"><i data-lucide="lock"></i> Password</label>
-                    <input type="password" id="reg-password" required placeholder="Create password" />
-                </div>
-                <button type="submit" class="auth-submit-btn">Register & Update Sheet</button>
+                <button type="submit" class="auth-submit-btn">Create Account & Enter Map</button>
+                <button type="button" id="btn-back-to-email" class="auth-back-btn">&larr; Use a different email</button>
             </form>
+        </div>
+    </div>
+
+    <!-- PROFILE BUTTON (top-right corner): shows which email is signed in -->
+    <div id="profile-widget" class="profile-widget hidden">
+        <button id="btn-profile" class="profile-btn" title="Your Profile">
+            <i data-lucide="user-circle-2"></i>
+            <span id="profile-btn-label">Profile</span>
+        </button>
+        <div id="profile-dropdown" class="profile-dropdown hidden">
+            <p class="profile-dropdown-name" id="profile-name-display">-</p>
+            <p class="profile-dropdown-email" id="profile-email-display">-</p>
+            <button id="btn-logout" class="profile-logout-btn"><i data-lucide="log-out"></i> Log Out</button>
         </div>
     </div>
 
