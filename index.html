@@ -149,35 +149,26 @@
 
 <body>
 
-    <!-- USER AUTHENTICATION OVERLAY (Email-only, no password) -->
-    <!-- Single flow: type your email -> if we already know it, you're logged in -->
-    <!-- instantly; if it's new, we ask for just your name and you're in. -->
+    <!-- USER AUTHENTICATION OVERLAY (Email-only, no password, single step) -->
+    <!-- Type your email and press Enter -> known email = instant login,-->
+    <!-- new email = instant registration. Either way you're straight into the map. -->
     <div id="auth-overlay" class="auth-overlay">
         <div class="auth-container">
             <div class="auth-header">
                 <img src="assets/logo.png" alt="AhBhu Logo" class="auth-logo" onerror="this.style.display='none'" />
                 <h2 class="auth-title">AhBhu Web GIS</h2>
-                <p class="auth-subtitle">Enter your email to continue</p>
+                <p class="auth-subtitle">Enter your email to open the map</p>
             </div>
 
-            <!-- Step 1: Email only. Existing users are logged straight in from here. -->
             <form id="form-email-check" class="auth-form">
                 <div class="form-group">
                     <label for="check-email"><i data-lucide="mail"></i> Mail ID</label>
                     <input type="email" id="check-email" required placeholder="name@email.com" autocomplete="email" />
                 </div>
-                <button type="submit" class="auth-submit-btn">Continue</button>
-            </form>
-
-            <!-- Step 2: Only shown the first time a new email is entered. One field, no password. -->
-            <form id="form-new-user" class="auth-form hidden">
-                <p class="auth-subtitle" id="new-user-email-note">Welcome! Let's create your account.</p>
-                <div class="form-group">
-                    <label for="reg-username"><i data-lucide="user"></i> Your Name</label>
-                    <input type="text" id="reg-username" required placeholder="Enter your name" />
-                </div>
-                <button type="submit" class="auth-submit-btn">Create Account & Enter Map</button>
-                <button type="button" id="btn-back-to-email" class="auth-back-btn">&larr; Use a different email</button>
+                <button type="submit" class="auth-submit-btn">Enter Map</button>
+                <p class="auth-subtitle" style="margin-top:10px;font-size:12px;">
+                    New here? Just enter your email — you'll be registered automatically.
+                </p>
             </form>
         </div>
     </div>
