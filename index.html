@@ -19,6 +19,12 @@
     <meta property="og:image" content="assets/logo.png" />
     <meta property="og:type" content="website" />
 
+    <!-- Favicon / Google search result icon. This was missing entirely before,
+         which is why Google's search results showed no logo for your site. -->
+    <link rel="icon" type="image/png" href="assets/logo.png" />
+    <link rel="shortcut icon" type="image/png" href="assets/logo.png" />
+    <link rel="apple-touch-icon" href="assets/logo.png" />
+
     <title>AhBhu - Simple & Accessible Web GIS</title>
 
     <!-- Google Fonts: Outfit for modern, premium look -->
@@ -125,6 +131,60 @@
             cursor: pointer;
             text-decoration: underline;
         }
+
+        /* Uniform square colour swatch for every layer card, overriding each
+           browser's inconsistent native <input type="color"> rendering. */
+        .layer-color-picker {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 28px !important;
+            height: 28px !important;
+            min-width: 28px;
+            min-height: 28px;
+            flex-shrink: 0;
+            padding: 0 !important;
+            margin: 0;
+            border: 2px solid rgba(0, 0, 0, 0.18) !important;
+            border-radius: 6px !important;
+            cursor: pointer;
+            background: none;
+        }
+
+        .layer-color-picker::-webkit-color-swatch-wrapper {
+            padding: 0;
+            border-radius: 4px;
+        }
+
+        .layer-color-picker::-webkit-color-swatch {
+            border: none;
+            border-radius: 4px;
+        }
+
+        .layer-color-picker::-moz-color-swatch {
+            border: none;
+            border-radius: 4px;
+        }
+
+        /* Bigger, more visible site logo + brand name in the header,
+           without needing to touch style.css. */
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-container .brand-logo {
+            height: 32px !important;
+            width: 32px !important;
+            object-fit: contain;
+        }
+
+        .brand-container .brand-name {
+            font-size: 22px !important;
+            line-height: 1;
+            margin: 0;
+        }
     </style>
 
     <!-- Google Search Engine Structured Data Schema (JSON-LD) -->
@@ -191,7 +251,7 @@
         <div class="dev-modal-content">
             <button id="btn-close-dev" class="close-dev-btn">&times;</button>
             <div class="dev-modal-header">
-                <h2 class="dev-name">Biswajit Mondal</h2>
+                <h2 class="dev-name">Biswajit Mondal (Modna)</h2>
             </div>
             <div class="dev-modal-body">
                 <p class="dev-subhead">PhD Scholar, Central University of Jharkhand</p>
@@ -295,7 +355,7 @@
             </div>
             <p class="brand-description">
                 Making GIS simple, accessible, and useful for everyone.
-                AhBhu brings maps and geospatial information together in an easy to use Web GIS platform.
+                AhBhu brings maps and geospatial information together in an easy-to-use Web GIS platform.
             </p>
         </div>
 
@@ -520,8 +580,7 @@
                 <label for="calc-formula">Expression / Formula:</label>
                 <input type="text" id="calc-formula" placeholder="e.g. Area * 0.000247" />
                 <p class="calc-tip">Available geometry variables: <code>Area</code>, <code>Length</code>,
-                    <code>Lat</code>, <code>Long</code>. Or type custom field names like <code>[fieldName]</code>.
-                </p>
+                    <code>Lat</code>, <code>Long</code>. Or type custom field names like <code>[fieldName]</code>.</p>
             </div>
             <div class="calc-buttons">
                 <button id="btn-calc-apply" class="calc-btn-submit">Apply Formula</button>
