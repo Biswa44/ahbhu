@@ -71,9 +71,11 @@
             background: #f5f3ff;
         }
 
-        .profile-btn i {
+        .profile-btn i,
+        .profile-btn svg {
             width: 18px;
             height: 18px;
+            color: #734F96;
         }
 
         .profile-dropdown {
@@ -164,6 +166,27 @@
         .layer-color-picker::-moz-color-swatch {
             border: none;
             border-radius: 4px;
+        }
+
+        /* Row holding the "Style Options" toggle (left) and the colour
+           swatch (right), moved here from the top row - same row, no new row added. */
+        .layer-style-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .layer-style-row .layer-style-settings-toggle {
+            flex: 1;
+        }
+
+        /* Remove the inner scrollbar on the Active Layers list so it grows
+           with its content instead of scrolling within its own box. */
+        #layer-list-container {
+            max-height: none !important;
+            overflow-y: visible !important;
+            overflow: visible !important;
         }
 
         /* Bigger, more visible site logo + brand name in the header,

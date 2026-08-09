@@ -517,10 +517,12 @@ function renderLayers() {
                     <input type="text" class="layer-name-input" value="${layer.name}" />
                     <span class="layer-badge-icon">${layer.type}</span>
                 </div>
-                <input type="color" class="layer-color-picker" value="${layer.color}" />
             </div>
             
-            <button class="layer-style-settings-toggle"><i data-lucide="sliders"></i> Style Options</button>
+            <div class="layer-style-row">
+                <button class="layer-style-settings-toggle"><i data-lucide="sliders"></i> Style Options</button>
+                <input type="color" class="layer-color-picker" value="${layer.color}" />
+            </div>
             
             <div class="layer-style-panel hidden" id="style-panel-${layer.id}">
                 ${layer.type === 'Point' ? `
